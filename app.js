@@ -8,8 +8,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import indexRouter from './routes/index.js';
+import indexRouter from './routes/index.js'
 import jogosRouter from './routes/jogos.js'
+import userRouter from './routes/user.js'
 
 var app = express();
 
@@ -25,6 +26,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/jogos', jogosRouter);
+app.use('/user', userRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
