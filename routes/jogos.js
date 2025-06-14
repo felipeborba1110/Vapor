@@ -1,9 +1,11 @@
 import express from 'express';
-import { addJogos, searchJogos, deleteJogo } from '../services/firebaseMethods.js';
+import { addJogo, deleteJogo, searchJogo, listJogos } from '../services/firebaseMethods.js';
+import { JWTSecret } from '../services/firebaseCredentias.js';
+import { jwtVerify } from 'jose';
 var router = express.Router();
 
-router.get('/', function(req, res, next) {
-    searchJogos()
+router.get('/', function(req, res) {
+    listJogos()
     .then((jogos) => {
       res.json(jogos)
     })
@@ -13,62 +15,93 @@ router.get('/', function(req, res, next) {
     })
 });
 
-router.post('/', function(req, res, next) {
-  try{
-    const body = req.body
-    addJogos(body)
-    res.send(201)
-  } catch (error) {
-    console.log(error)
-    res.status(error.codigoStatus).send(error.message);
-  }
+router.post('/', function(req, res) {
+  let token = req.get( 'Authorization' )
+      if (!token) {
+          res.status(401).send('Não autorizado, token não informado');
+          return;
+      }
+      token = token.split(' ')[1];
+      if (!token) {
+          res.status(498).send('Não autorizado, token inválido');
+          return;
+      }
+      jwtVerify(token, JWTSecret, { algorithms: ['HS256'] })
+      .then((payload) =>{
+        console.log(payload);
+          if (payload.payload.nivelAcesso == "admin"){
+            try{
+              const jogo = {
+                tittle: req.body.tittle,
+                date: req.body.date
+              }
+              addJogo(jogo)
+              res.send(201)
+            } catch (error) {
+              console.log(error)
+              res.status(error.codigoStatus).send(error.message);
+            }
+          } else {
+            res.status(498).send('Não autorizado, token inválido')
+          }
+      })
+      .catch((error) => {
+          console.log(error);
+          if (error.code == 'ERR_JWT_EXPIRED') {
+              res.status(498).send("Token expirado " + error.code);
+          } else {
+              res.status(498).send("Token inválido " + error.code);
+          }
+          return;
+      });
 })
 
 router.delete('/', (req, res) => {
-  try {
-    const jogoTittle = req.body.tittle
-    firebaseJogos.deleteJogo(jogoTittle)
-    res.send(200)
-  } catch (error) {
-    console.log(error)
-    res.status(error.codigoStatus).send(error.message);
-  }
+  let token = req.get( 'Authorization' )
+      if (!token) {
+          res.status(401).send('Não autorizado, token não informado');
+          return;
+      }
+      token = token.split(' ')[1];
+      if (!token) {
+          res.status(498).send('Não autorizado, token inválido');
+          return;
+      }
+      jwtVerify(token, JWTSecret, { algorithms: ['HS256'] })
+      .then((payload) =>{
+        console.log(payload);
+          if (payload.payload.nivelAcesso == "admin"){
+            searchJogo(req.body.tittle)
+            .then((jogo) => {
+              if (jogo.length == 0) {
+                res.status(404).send("No game found")
+              } else {
+                deleteJogo(jogo[0])
+                .then(() => {
+                  res.send("Jogo deletado com sucesso")
+                })
+                .catch((error) => {
+                  res.send(error)
+                })
+              }
+            })
+            .catch((error) => {
+              console.log(error);
+              res.send(error)
+            })
+          } else {
+            res.status(498).send('Não autorizado, token inválido')
+          }
+      })
+      .catch((error) => {
+          console.log(error);
+          if (error.code == 'ERR_JWT_EXPIRED') {
+              res.status(498).send("Token expirado " + error.code);
+          } else {
+              res.status(498).send("Token inválido " + error.code);
+          }
+          return;
+      });
 })
-
-// router.delete('/', (req, res) => {
-//   const id_delete = req.body.id
-//   jogos.splice(id_delete, 1);
-//   let i = id_delete
-//   for(; i < jogos.length; i++){
-//     jogos[i].id = i
-//   }
-//   res.json(jogos)
-//   }
-// )
-
-// router.put('/', (req, res) => {
-//   const id_put = req.body.id
-//   const tittle = req.body.tittle
-//   const date = req.body.date
-//   const jogo = {
-//     id,tittle,date
-//   }
-//   jogos[id_put] = jogo
-//   res.json(jogos)
-//   }
-// )
-
-// router.patch('/', (req, res) => {
-//   const id_patch = req.body.id
-//   if (req.body.tittle != null){
-//     jogos[id_patch].tittle = req.body.tittle
-//   } else if(req.body.date != null) {
-//     jogos[id_patch].date = req.body.date
-//   } else {
-//     res.send(304)
-//   }
-//   res.json(jogos)
-//   }
-// )
 
 export default router;
