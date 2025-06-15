@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword,
     signInWithEmailAndPassword } 
 from "firebase/auth";
-import { getFirestore, setDoc, doc, collection, getDocs, addDoc, query, where, deleteDoc} from "firebase/firestore";
+import { getFirestore, setDoc, doc, collection, getDocs, addDoc, query, where, deleteDoc, updateDoc, arrayUnion, arrayRemove} from "firebase/firestore";
 
 import { firebaseConfig } from '../services/firebaseCredentias.js'
 
@@ -108,7 +108,7 @@ export function deleteJogo(jogo) {
 export function addUserSignup(email) {
     const docRef = addDoc(collection(db, "users"), {
         email: email,
-        ownedGames: []
+        library: []
     })
     docRef
     .then((doc) => {
@@ -116,7 +116,7 @@ export function addUserSignup(email) {
     })
     .catch((error) => {
         console.log(error)
-        console.log("Erro ao salvar usuario no db de ownedGames")
+        console.log("Erro ao salvar usuario e no cadastro de sua biblioteca de jogos")
     })
 }
 
@@ -141,7 +141,7 @@ export function listUsers() {
     )
 }
 
-export function searchOwnedGames(email) {
+export function searchLibrary(email) {
     return new Promise ((resolve,reject) => {
         const q = query(collection(db, "users"), where("email", "==", email));
 
@@ -161,41 +161,56 @@ export function searchOwnedGames(email) {
     })    
 }
 
+export function addLibrary(email, jogo) {
+    return new Promise ((resolve,reject) => {
+        searchLibrary(email)
+        .then((user) => {
+        if (user.length == 0) {
+            res.status(404).send("No user found")
+        } else {
+            const docRef = doc(db, "users", user[0].id);
+            updateDoc(docRef, { 
+                library: arrayUnion(jogo)
+            })
+            .then((resposta) => {
+                resolve(resposta)
+            })
+            .catch((error) => {
+                reject(error)
+            })
+        }
+        })
+        .catch((error) => {
+            console.log("Erro ao adicionar jogo na biblioteca do usuario");
+            reject(error)
+        })
+    })
+}
 
-
-// export function searchOwnedGames() {
-//     return new Promise((resolve, reject) => {
-//         getDocs(collection(db, "users"))
-//         .then((querySnapshot) => {
-//             const resposta = new Array();
-//             querySnapshot.forEach((doc) => {
-//             let temp = doc.data();
-//             temp.id = doc.id;
-//             resposta.push(temp);
-//           });
-//           resolve(resposta);
-//         })
-//         .catch((error) => {
-//           reject(error);
-//         });
-//       }
-//     )
-// }
-
-// export function addOwnedGame(email, ownedGame) {
-
-//     const q = query(collection(db,"users"), where("email", "==", email))
-//     const querySnapshot = getDocs(q);
-
-//     querySnapshot.forEach((doc) => {
-//     setDoc(doc, ownedGame)
-//     .then((resposta) => {
-//         console.log(resposta)
-//         console.log("Jogo registrado com sucesso");
-//     })
-//     .catch((error) => {
-//         console.error("Erro ao adicionar documento: ", error);
-//     })
-//     });
-    
-// }
+export function deleteLibrary(email, jogo) {
+    return new Promise ((resolve,reject) => {
+        console.log("Usuario Afetado: " + email)
+        console.log("Removendo jogo: " + JSON.stringify(jogo, null, 2))
+        searchLibrary(email)
+        .then((user) => {
+        if (user.length == 0) {
+            res.status(404).send("No user found")
+        } else {
+            const docRef = doc(db, "users", user[0].id);
+            updateDoc(docRef, { 
+                library: arrayRemove(jogo)
+            })
+            .then((resposta) => {
+                resolve(resposta)
+            })
+            .catch((error) => {
+                reject(error)
+            })
+        }
+        })
+        .catch((error) => {
+            console.log("Erro ao remover jogo na biblioteca do usuario");
+            reject(error)
+        })
+    })
+}
