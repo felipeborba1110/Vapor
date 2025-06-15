@@ -58,9 +58,9 @@ export function listJogos() {
         .then((querySnapshot) => {
             const resposta = new Array();
             querySnapshot.forEach((doc) => {
-            let temp = doc.data();
-            temp.id = doc.id;
-            resposta.push(temp);
+                let temp = doc.data();
+                temp.id = doc.id;
+                resposta.push(temp);
           });
           resolve(resposta);
         })
@@ -180,56 +180,35 @@ export function searchLibrary(email) {
     })    
 }
 
-export function addLibrary(email, jogo) {
+export function addLibrary(user, jogo) {
     return new Promise ((resolve,reject) => {
-        searchLibrary(email)
-        .then((user) => {
-        if (user.length == 0) {
-            res.status(404).send("No user found")
-        } else {
-            const docRef = doc(db, "users", user[0].id);
-            updateDoc(docRef, { 
-                library: arrayUnion(jogo)
-            })
-            .then((resposta) => {
-                resolve(resposta)
-            })
-            .catch((error) => {
-                reject(error)
-            })
-        }
+        const docRef = doc(db, "users", user[0].id);
+        updateDoc(docRef, { 
+            library: arrayUnion(jogo)
+        })
+        .then((resposta) => {
+            resolve(resposta)
         })
         .catch((error) => {
-            console.log("Erro ao adicionar jogo na biblioteca do usuario");
             reject(error)
         })
     })
 }
 
-export function deleteLibrary(email, jogo) {
+
+export function deleteLibrary(user, jogo) {
     return new Promise ((resolve,reject) => {
-        console.log("Usuario Afetado: " + email)
+        console.log("Usuario Afetado: " + user[0].email)
         console.log("Removendo jogo: " + JSON.stringify(jogo, null, 2))
-        searchLibrary(email)
-        .then((user) => {
-        if (user.length == 0) {
-            res.status(404).send("No user found")
-        } else {
-            const docRef = doc(db, "users", user[0].id);
-            updateDoc(docRef, { 
-                library: arrayRemove(jogo)
-            })
-            .then((resposta) => {
-                resolve(resposta)
-            })
-            .catch((error) => {
-                reject(error)
-            })
-        }
+        const docRef = doc(db, "users", user[0].id);
+        updateDoc(docRef, { 
+            library: arrayRemove(jogo)
+        })
+        .then((resposta) => {
+            resolve(resposta)
         })
         .catch((error) => {
-            console.log("Erro ao remover jogo na biblioteca do usuario");
             reject(error)
         })
-    })
-}
+    }
+)}

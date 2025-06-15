@@ -117,7 +117,6 @@ router.patch('/', function(req, res) {
       jwtVerify(token, JWTSecret, { algorithms: ['HS256'] })
       .then((payload) =>{
           if (payload.payload.nivelAcesso == "admin"){
-
           searchJogo(req.body.tittle)
             .then((jogo) => {
               if (jogo.length == 0) {
