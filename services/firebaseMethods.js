@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword,
     signInWithEmailAndPassword } 
 from "firebase/auth";
-import { getFirestore, setDoc, doc, collection, getDocs, addDoc, query, where, deleteDoc, updateDoc, arrayUnion, arrayRemove} from "firebase/firestore";
+import { getFirestore, doc, collection, getDocs, addDoc, query, where, deleteDoc, updateDoc, arrayUnion, arrayRemove} from "firebase/firestore";
 
 import { firebaseConfig } from '../services/firebaseCredentias.js'
 
@@ -40,13 +40,15 @@ const firebaseLogin = {
 export default firebaseLogin;
 
 export function addJogo(jogo) {
-    const docRef = doc(collection(db,"jogos"));
-    setDoc(docRef, jogo)
-    .then(() => {
-        console.log("Jogo registrado com sucesso");
-    })
-    .catch((error) => {
-        console.error("Erro ao adicionar documento: ", error);
+    return new Promise((resolve, reject) => {
+        const docRef = addDoc(collection(db,"jogos"), jogo)
+        .then((resposta) => {
+            resolve(resposta.id)
+        })
+        .catch((error) => {
+            console.error("Erro ao adicionar documento: ", error);
+            reject(error)
+        })
     })
 }
 
@@ -100,6 +102,23 @@ export function deleteJogo(jogo) {
         .catch((error) => {
             console.log(error);
             console.log("Erro ao deletar jogo");
+            reject(error)
+        })
+    })
+}
+
+export function updateJogo(jogo, date) {
+    return new Promise ((resolve,reject) => {
+        const docRef = doc(db, "jogos", jogo.id)
+        updateDoc(docRef, {
+            date: date
+        })
+        .then((resposta)=>{
+            resolve(resposta)
+        })
+        .catch((error) => {
+            console.log(error);
+            console.log("Erro ao atualizar jogo");
             reject(error)
         })
     })

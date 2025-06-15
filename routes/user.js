@@ -232,7 +232,7 @@ router.post('/login', function(req, res) {
         .setIssuedAt()
         .setSubject('Login dia '+new Date())
         .setJti('123')
-        .setExpirationTime('60s')
+        .setExpirationTime('10m')
         .sign(JWTSecret)
         .then( (token) => {
             res.status(200).send(token);
