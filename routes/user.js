@@ -179,7 +179,7 @@ router.post('/library', function(req, res) {
                         } else {
                             addLibrary(user, jogo[0])
                             .then(() => {
-                                res.send("Jogo adicionado com sucesso")
+                                res.send("Jogo comprado com sucesso")
                             })
                             .catch((error) => {
                                 console.log(error);
